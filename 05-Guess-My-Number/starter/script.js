@@ -1,6 +1,26 @@
 'use strict';
 
 function guestMyNumber(){
+    const GameStatusType = {
+        RESET: 'RESET',
+        ONGOING: 'ONGOING',
+        GAMEOVER: 'GAMEOVER'
+    }
+    const GameOverType = {
+        WIN: "WIN",
+        LOSE: "LOSE",
+    }
+    const GuessType = {
+        CORRECT: "CORRECT",
+        TOO_LOW: "TOO_LOW",
+        TOO_HIGH: "TOO_HIGH",
+    }
+    const STEP_MAX = 10;
+
+    let gameStatus = GameStatusType.RESET;
+    let gameOverStatus;
+    let guessEvaluation;
+    let step = 0;
     let highscore = 0;
     let score = 0;
     let guessNumber = undefined;
@@ -8,6 +28,7 @@ function guestMyNumber(){
     let message = "";
     let btnCheckDisabled = false;
     let guessNumberDisabled = false;
+    let isGameOver = false;
     
     const elMessage = document.querySelector(".message");
     const elGuessNumer = document.querySelector("input.guess");
@@ -27,47 +48,121 @@ function guestMyNumber(){
     }
 
     function reset(){
-        elGuessNumer.disabled = false;
-        btnCheck.disabled = false;
+        gameStatus = GameStatusType.RESET;
+        gameOverStatus = null;
+        guessEvaluation = null;
+        guessNumberDisabled = false;
+        btnCheckDisabled = false;
 
         secretNumber = Math.floor(Math.random() * 100);
         guessNumber = "";
-        score= 100;
+        score= 0;
+        step = 0;
         console.log("secretNumber", secretNumber);
-        updateUI();
+        doThinking();
     }
 
-    function updateHighscore(){
+    function debug(){
+        console.log("Game Status / Over :",gameStatus, gameOverStatus);
+        console.log("Guess Number / Secret Number (Evaluation) ",guessNumber, secretNumber, guessEvaluation);
+        console.log("Score / Highscore ",score, highscore);
+        console.log("Step / Step MAX",step, STEP_MAX);
+    }
+
+    function calculateScore(){
+        score = (STEP_MAX - step + 1) * 100;
         if (highscore < score){
             highscore = score;
         }
     }
 
-    function check(){
-        console.log("Thinking...")
-        message = "Thinking ...";
-        guessNumber = elGuessNumer.value;
-        if (guessNumber > secretNumber) {
-            message = "Too high";
-            score--;
-        } else if (guessNumber < secretNumber) {
-            message = "Too low";
-            score--;
-        } else {
-            message = "Congratulation!";
-            guessNumberDisabled = true;
-            btnCheckDisabled = true;
-            updateHighscore();
+    function updateGameControls() {
+        const isGameOver = gameStatus == GameStatusType.GAMEOVER;
+
+        guessNumberDisabled = isGameOver;
+        btnCheckDisabled = isGameOver;
+    }
+
+    function updateGameMessage(){
+        if (gameStatus == GameStatusType.RESET){
+            message = "I am thinking of a number between 1 and 100.";
+            return;
         }
+
+        if (gameStatus == GameStatusType.GAMEOVER){
+            message = gameOverStatus == GameOverType.WIN ? "Congratulation! You win" : "Game over! You lose";
+            return;
+        }
+
+        if (gameStatus == GameStatusType.ONGOING) {
+            message = guessEvaluation == GuessType.TOO_HIGH ? `${guessNumber} is too high` : `${guessNumber} is too low`;
+        }
+    }
+
+    function checkGameOver(){
+        if (guessNumber == secretNumber){
+            gameStatus = GameStatusType.GAMEOVER;
+            gameOverStatus = GameOverType.WIN;
+            return;
+        } 
+        
+        if (step == STEP_MAX){
+            gameStatus = GameStatusType.GAMEOVER;
+            gameOverStatus = GameOverType.LOSE;
+            return;
+        }
+        
+        gameStatus = GameStatusType.ONGOING;
+    }
+
+    function processPlayerInput(){
+        guessNumber = elGuessNumer.value;
+        step++;
+        gameStatus == GameStatusType.ONGOING;
+    }
+
+    function processGameRule(){
+        guessEvaluation = guessNumber > secretNumber ? GuessType.TOO_HIGH : GuessType.TOO_LOW;
+    }
+
+    function doThinking(){
+        if (gameStatus != GameStatusType.RESET){
+            message = "Thinking";
+            checkGameOver();
+            if (gameStatus == GameStatusType.ONGOING){
+                processGameRule();
+            } else if (gameStatus == GameStatusType.GAMEOVER){
+                calculateScore();
+            }
+        }
+        updateGameControls();
+        updateGameMessage();
         updateUI();
     }
 
+    function onPlayerInput(){
+        if (gameStatus == GameStatusType.RESET){
+            gameStatus = GameStatusType.ONGOING;
+        }
+        processPlayerInput();
+        doThinking(); 
+        debug();
+    }
+
     btnCheck.addEventListener('click', (event) => {
-        check();
+        onPlayerInput();   
     })
 
     btnReset.addEventListener('click', (event) => {
         reset();
+        elGuessNumer.focus();
+    })
+
+    elGuessNumer.addEventListener("keyup", (event) => {
+        if (event.key == "Enter"){
+            onPlayerInput();
+            event.target.select();
+        }
     })
 
     reset();
