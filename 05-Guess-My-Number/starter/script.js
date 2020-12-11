@@ -17,17 +17,25 @@ function guestMyNumber(){
     }
     const STEP_MAX = 10;
 
+    const debugDisabled = true;
     let gameStatus = GameStatusType.RESET;
     let gameOverStatus;
     let guessEvaluation;
     let step = 0;
     let highscore = 0;
+    let prevHighscore = 0;
+    let preHighscore = 0;
     let score = 0;
+    let prevScore = 0;
     let guessNumber = undefined;
+    let prevGuessNumber = undefined;
     let secretNumber = undefined;
     let message = "";
+    let prevMessage = "";
     let btnCheckDisabled = false;
+    let prevBtnCheckDisabled = false;
     let guessNumberDisabled = false;
+    let prevGuessNumberDisabled = false;
     let isGameOver = false;
     
     const elMessage = document.querySelector(".message");
@@ -38,13 +46,30 @@ function guestMyNumber(){
     const btnReset = document.querySelector("button.again");
 
     function updateUI(){
-        elMessage.textContent = message;
-        elScore.textContent = score;
-        elHighscore.textContent = highscore;
-        btnCheck.disabled = btnCheckDisabled;
-        elGuessNumer.disabled = guessNumberDisabled;
-        elGuessNumer.value = guessNumber;
-        console.log("UI is updated");
+        if (message !== prevMessage){
+            elMessage.textContent = message;
+            prevMessage = message;
+        }
+        if (score !== prevScore) {
+            elScore.textContent = score;
+            prevScore = score;
+        }
+        if (highscore !== prevHighscore) {
+            elHighscore.textContent = highscore;
+            prevHighscore = highscore;
+        }
+        if (btnCheckDisabled !== prevBtnCheckDisabled){
+            btnCheck.disabled = btnCheckDisabled;
+            prevBtnCheckDisabled = btnCheckDisabled;
+        }
+        if (guessNumberDisabled !== prevGuessNumberDisabled){
+            elGuessNumer.disabled = guessNumberDisabled;
+            prevGuessNumberDisabled = guessNumberDisabled;
+        }
+        if (guessNumber !== prevGuessNumber) {
+            elGuessNumer.value = guessNumber;
+            prevGuessNumber = guessNumber;
+        }
     }
 
     function reset(){
@@ -58,11 +83,13 @@ function guestMyNumber(){
         guessNumber = "";
         score= 0;
         step = 0;
-        console.log("secretNumber", secretNumber);
         doThinking();
     }
 
     function debug(){
+        if (debugDisabled){
+            return;
+        }
         console.log("Game Status / Over :",gameStatus, gameOverStatus);
         console.log("Guess Number / Secret Number (Evaluation) ",guessNumber, secretNumber, guessEvaluation);
         console.log("Score / Highscore ",score, highscore);
